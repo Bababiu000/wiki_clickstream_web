@@ -1,9 +1,13 @@
 import http from '@/utils/http'
 
-export const getDataAPI = (dateStr, dc_idx) => {
-  return http.get(`clickstream/${dateStr}`, { params: { dc_idx } })
+export const getDateRangeAPI = () => {
+  return http.get(`clickstream/dateRange`)
 }
 
-export const getAllDateAPI = () => {
-  return http.get(`clickstream/alldate`)
+export const getDCRootAPI = dateStr => {
+  return http.get(`clickstream/dcRoot/${dateStr}`)
+}
+
+export const getDCsAPI = (dateStr, dcRoot) => {
+  return http.get(`clickstream/dcs/${dateStr}`, { params: { dcRoot } })
 }

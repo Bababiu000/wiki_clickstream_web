@@ -1,47 +1,72 @@
 <template>
-  <div class="menu">
-    <el-menu class="el-menu-vertical-demo" :default-active="`/${maxYear}-${maxMonth}`" router unique-opened>
-      <el-sub-menu v-for="year in dateRange.years" :index="`/${year}`">
-        <template #title>
-          <span>{{ year }} 年</span>
-        </template>
-        <el-menu-item v-for="month in dateRange.months[year]" :index="`/${year}-${month}`">{{ month }} 月</el-menu-item>
-      </el-sub-menu>
-    </el-menu>
-  </div>
+  <el-aside width="200px">
+    <div class="menu">
+      <h3 class="menu-title">wiki cls 数据可视化</h3>
+      <el-menu
+        class="el-menu-vertical-demo"
+        :default-active="`/${route.params.date}`"
+        router
+        unique-opened
+      >
+        <el-sub-menu v-for="year in years" :index="`/${year}`">
+          <template #title>
+            <span>{{ year }} 年</span>
+          </template>
+          <el-menu-item v-for="month in months[year]" :index="`/${year}-${month}`">
+            {{ month }} 月
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+    </div>
+  </el-aside>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getDataAPI } from '@/apis/clickstream'
+import { ref, onMounted, defineProps } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getDateRangeAPI } from '@/apis/clickstream.js'
 
+const route = useRoute()
 const router = useRouter()
 
-const dateRange = {
-  years: ['2023', '2022', '2021', '2020'],
-  months: {
-    2020: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    2021: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    2022: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-    2023: [1, 2, 3, 4, 5, 6, 7, 8]
-  },
-  maxYear: 2023,
-  maxMonth: 8
+const years = ref([])
+const months = ref({})
+const maxYear = ref(0)
+const maxMonth = ref(0)
+
+const getDateRange = async () => {
+  const res = await getDateRangeAPI()
+  const dateRange = res.data
+  years.value = dateRange.years
+  months.value = dateRange.months
+  maxYear.value = dateRange.maxYear
+  maxMonth.value = dateRange.maxMonth
 }
-const { years, months, maxYear, maxMonth } = dateRange
+
 onMounted(async () => {
-  router.push(`/${maxYear}-${maxMonth}`)
-  const res = await getDataAPI('2023-08-01')
-  console.log(res)
+  await getDateRange()
+  if (!route.params.date) router.push(`/${maxYear.value}-${maxMonth.value}`)
 })
 </script>
 
 <style>
 .menu {
+  display: flex;
+  flex-direction: column;
   height: 100%;
+
+  .menu-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border-right: solid 1px var(--el-menu-border-color);
+    border-bottom: solid 1px var(--el-menu-border-color);
+  }
+
   .el-menu {
-    height: 100%;
+    flex: 1;
+
     .el-menu-item {
       height: 40px;
       line-height: 40px;
@@ -49,4 +74,3 @@ onMounted(async () => {
   }
 }
 </style>
-@/apis/clickstream
