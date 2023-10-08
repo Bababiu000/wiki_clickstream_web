@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, defineProps } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getDateRangeAPI } from '@/apis/clickstream.js'
 
@@ -49,7 +49,7 @@ onMounted(async () => {
 })
 </script>
 
-<style>
+<style lang="scss">
 .menu {
   display: flex;
   flex-direction: column;

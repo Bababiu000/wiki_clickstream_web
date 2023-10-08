@@ -7,9 +7,6 @@ import Aside from './compoments/Aside.vue'
     <el-container>
       <Aside></Aside>
       <el-container>
-        <!-- <el-header>
-          <h2>wiki clickstream 数据可视化</h2>
-        </el-header> -->
         <el-main>
           <router-view></router-view>
         </el-main>
@@ -18,7 +15,7 @@ import Aside from './compoments/Aside.vue'
   </div>
 </template>
 
-<style lang="less" scoped>
+<style lang="scss" scoped>
 .layout {
   width: 100%;
   min-height: 100vh;
@@ -37,7 +34,7 @@ import Aside from './compoments/Aside.vue'
   }
 
   .el-aside {
-    height: 100vh;
+    min-height: 100vh;
   }
 
   .el-main {
