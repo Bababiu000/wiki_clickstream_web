@@ -15,7 +15,7 @@ import Aside from './compoments/Aside.vue'
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .layout {
   > .el-container {
     position: fixed;

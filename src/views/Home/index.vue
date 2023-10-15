@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
-import { useScroll } from '@vueuse/core'
 import 'echarts-wordcloud'
 import { getListAPI } from '@/apis/clickstream.js'
+
+import { useWindowSize } from '@vueuse/core'
+
+const { height } = useWindowSize()
 
 const route = useRoute()
 const router = useRouter()
@@ -59,9 +62,6 @@ const toTree = center => {
   else router.push({ path: `/graph/${curDate.value}` })
 }
 
-const headerRef = ref(null)
-const { y } = useScroll(headerRef)
-
 onBeforeRouteUpdate(async (to, from) => {
   if (from.fullPath === to.fullPath) return
   else if (from.name === to.name && from.params.date !== to.params.date) {
@@ -75,7 +75,8 @@ onBeforeRouteUpdate(async (to, from) => {
 
 <template>
   <div class="home">
-    <div class="operation-container" ref="header">
+    <div class="operation-container">
+      {{ wHeight }}
       <div class="search">
         <!-- 搜索框 -->
         <el-input
@@ -103,7 +104,8 @@ onBeforeRouteUpdate(async (to, from) => {
             padding: '8px 0',
             background: '#f5f7fa'
           }"
-          style="width: 95%"
+          style="width: 100%"
+          :style="{ height: height - 167 + 'px' }"
           border
           stripe
         >
@@ -168,7 +170,7 @@ onBeforeRouteUpdate(async (to, from) => {
   height: 100%;
   padding-top: 60px;
   box-sizing: border-box;
-  background-color: #f1f2f4;
+  background-color: #fff;
 
   .operation-container {
     position: absolute;
@@ -203,11 +205,11 @@ onBeforeRouteUpdate(async (to, from) => {
   .main-container {
     height: 100%;
     overflow: auto;
+    transition: all 0.2s ease-in-out;
     .table-box {
       box-sizing: border-box;
       width: 100%;
-      margin-top: 10px;
-      padding: 25px;
+      padding: 25px 25px 0;
       background-color: #fff;
 
       .button-cell {
