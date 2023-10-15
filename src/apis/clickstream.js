@@ -4,8 +4,8 @@ export const getDateRangeAPI = () => {
   return http.get(`clickstream/date-range`)
 }
 
-export const getListAPI = (dateStr, pageNum, pageSize) => {
-  return http.get(`clickstream/list/${dateStr}`, { params: { pageNum, pageSize } })
+export const getListAPI = (dateStr, pageNum, pageSize, keyword) => {
+  return http.get(`clickstream/list/${dateStr}`, { params: { pageNum, pageSize, keyword } })
 }
 
 export const getCenterAPI = dateStr => {

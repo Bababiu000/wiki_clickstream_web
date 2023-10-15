@@ -5,36 +5,26 @@ import Aside from './compoments/Aside.vue'
 <template>
   <div class="layout">
     <el-container>
-      <Aside></Aside>
-      <el-container>
-        <el-main>
-          <router-view></router-view>
-        </el-main>
-      </el-container>
+      <el-aside width="200px">
+        <Aside></Aside>
+      </el-aside>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
   </div>
 </template>
 
 <style lang="scss" scoped>
 .layout {
-  width: 100%;
-  min-height: 100vh;
-
-  .el-container {
-    &.is-vertical {
-      min-height: 100vh;
-    }
-  }
-
-  .el-header {
+  > .el-container {
+    position: fixed;
     width: 100%;
-    text-align: center;
-    line-height: 60px;
-    border-bottom: 2px solid #f0f0f0;
+    height: 100%;
   }
 
   .el-aside {
-    min-height: 100vh;
+    height: 100%;
   }
 
   .el-main {

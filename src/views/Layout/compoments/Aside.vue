@@ -1,6 +1,5 @@
 <template>
-  <el-aside width="200px">
-    <div class="menu">
+  <div class="menu">
       <h3 class="menu-title">wiki cls 数据可视化</h3>
       <el-menu
         class="el-menu-vertical-demo"
@@ -18,7 +17,6 @@
         </el-sub-menu>
       </el-menu>
     </div>
-  </el-aside>
 </template>
 
 <script setup>
