@@ -35,21 +35,35 @@ onMounted(async () => {
 })
 
 const total = ref(0)
-const pageNum = ref(1)
-const pageSize = ref(10)
+const pageNum = ref(parseInt(route.query.pageNum) || 1)
+const pageSize = ref(parseInt(route.query.pageSize) || 10)
+
+const paramsJump = () => {
+  let queryObj = {}
+  if (queryParams.value.keyword) queryObj.keyword = queryParams.value.keyword
+  queryObj = {
+    ...queryObj,
+    pageNum: pageNum.value,
+    pageSize: pageSize.value
+  }
+  router.push({
+    path: `/${curDate.value}`,
+    query: queryObj
+  })
+}
 
 const handleSizeChange = val => {
   pageSize.value = val
-  getList()
+  paramsJump()
 }
 const handleCurrentChange = val => {
   pageNum.value = val
-  getList()
+  paramsJump()
 }
 
-const queryParams = ref({ keyword: '' })
+const queryParams = ref({ keyword: route.query.keyword || '' })
 const search = () => {
-  getList()
+  paramsJump()
 }
 
 const toWordCloud = center => {
@@ -63,20 +77,26 @@ const toTree = center => {
 }
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (from.fullPath === to.fullPath) return
-  else if (from.name === to.name && from.params.date !== to.params.date) {
+  if (to.name === from.name && to.params.date !== from.params.date) {
     curDate.value = to.params.date
     pageNum.value = 1
     pageSize.value = 10
-    await getList()
+    queryParams.value.keyword = ''
+  } else if (to.query.keyword && !from.query.keyword) {
+    pageNum.value = 1
+    pageSize.value = 10
+  } else if (!to.query.keyword) {
+    pageNum.value = 1
+    pageSize.value = 10
+    queryParams.value.keyword = ''
   }
+  await getList()
 })
 </script>
 
 <template>
   <div class="home">
     <div class="operation-container">
-      {{ wHeight }}
       <div class="search">
         <!-- 搜索框 -->
         <el-input
@@ -180,11 +200,13 @@ onBeforeRouteUpdate(async (to, from) => {
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: auto;
     width: 100%;
     height: 60px;
     background-color: #fff;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     .search {
+      text-wrap: nowrap;
       margin-right: 25px;
       .search-input {
         width: 300px;

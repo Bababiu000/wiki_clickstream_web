@@ -1,22 +1,22 @@
 <template>
   <div class="menu">
-      <h3 class="menu-title">wiki cls 数据可视化</h3>
-      <el-menu
-        class="el-menu-vertical-demo"
-        :default-active="`/${route.params.date}`"
-        router
-        unique-opened
-      >
-        <el-sub-menu v-for="year in years" :index="`/${year}`">
-          <template #title>
-            <span>{{ year }} 年</span>
-          </template>
-          <el-menu-item v-for="month in months[year]" :index="`/${year}-${month}`">
-            {{ month }} 月
-          </el-menu-item>
-        </el-sub-menu>
-      </el-menu>
-    </div>
+    <h3 class="menu-title">wiki cls 数据可视化</h3>
+    <el-menu
+      class="el-menu-vertical-demo"
+      :default-active="`/${route.params.date}`"
+      router
+      unique-opened
+    >
+      <el-sub-menu v-for="year in years" :index="`/${year}`">
+        <template #title>
+          <span>{{ year }} 年</span>
+        </template>
+        <el-menu-item v-for="month in months[year]" :index="`/${year}-${month}`">
+          {{ month }} 月
+        </el-menu-item>
+      </el-sub-menu>
+    </el-menu>
+  </div>
 </template>
 
 <script setup>
@@ -43,7 +43,10 @@ const getDateRange = async () => {
 
 onMounted(async () => {
   await getDateRange()
-  if (!route.params.date) router.push(`/${maxYear.value}-${maxMonth.value}`)
+  if (!route.params.date)
+    router.push({
+      path: `/${maxYear.value}-${maxMonth.value}`
+    })
 })
 </script>
 
@@ -54,10 +57,10 @@ onMounted(async () => {
   height: 100%;
 
   .menu-title {
+    height: 60px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
     border-right: solid 1px var(--el-menu-border-color);
     border-bottom: solid 1px var(--el-menu-border-color);
   }
