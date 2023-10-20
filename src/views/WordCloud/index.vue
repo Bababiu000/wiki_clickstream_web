@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import * as echarts from 'echarts'
 import 'echarts-wordcloud'
+import { exportImg } from '@/utils/dataExport.js'
 import { getCenterAPI, getDetailAPI } from '@/apis/clickstream.js'
 
 const route = useRoute()
@@ -114,11 +115,21 @@ const goBack = e => {
   }
   target.blur()
 }
+
+const onClickExportImg = () => {
+  let fileName = `${route.params.date} ${
+    route.query.center ? clsDataList.value[0].name : ''
+  } 词云图`
+  exportImg(fileName, 'container')
+}
 </script>
 
 <template>
   <div class="word-cloud">
-    <el-button @click="goBack" class="back">返回</el-button>
+    <div class="btn-box">
+      <el-button @click="goBack" class="back">返回</el-button>
+      <el-button type="primary" @click="onClickExportImg">导出</el-button>
+    </div>
     <div id="container"></div>
   </div>
 </template>
@@ -135,11 +146,11 @@ const goBack = e => {
     width: 100%;
     height: 100%;
   }
-  .back {
+  .btn-box {
     position: fixed;
     z-index: 999;
     top: 50px;
-    right: 10%;
+    right: 5%;
   }
 }
 </style>

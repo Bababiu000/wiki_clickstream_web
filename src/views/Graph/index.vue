@@ -2,6 +2,7 @@
 import * as echarts from 'echarts'
 import { getDetailAPI } from '@/apis/clickstream.js'
 import { useRouter, useRoute } from 'vue-router'
+import { exportImg } from '@/utils/dataExport.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -103,10 +104,18 @@ const goBack = e => {
   }
   target.blur()
 }
+
+const onClickExportImg = () => {
+  let fileName = `${route.params.date} ${clsDataList.value[0].name} 关系图`
+  exportImg(fileName, 'container')
+}
 </script>
 <template>
   <div class="graph">
-    <el-button @click="goBack" class="back">返回</el-button>
+    <div class="btn-box">
+      <el-button @click="goBack" class="back">返回</el-button>
+      <el-button type="primary" @click="onClickExportImg">导出</el-button>
+    </div>
     <div id="container"></div>
   </div>
 </template>
@@ -123,11 +132,11 @@ const goBack = e => {
     height: 100%;
   }
 
-  .back {
+  .btn-box {
     position: fixed;
     z-index: 999;
     top: 50px;
-    right: 10%;
+    right: 5%;
   }
 }
 </style>
