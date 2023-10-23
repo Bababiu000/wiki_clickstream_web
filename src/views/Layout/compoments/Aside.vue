@@ -22,7 +22,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getDateRangeAPI } from '@/apis/clickstream.js'
+import { getDateRangeAPI } from '@/apis/clickstream_node.js'
 
 const route = useRoute()
 const router = useRouter()

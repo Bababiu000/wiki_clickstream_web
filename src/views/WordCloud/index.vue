@@ -4,7 +4,7 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import * as echarts from 'echarts'
 import 'echarts-wordcloud'
 import { exportImg } from '@/utils/dataExport.js'
-import { getCenterAPI, getDetailAPI } from '@/apis/clickstream.js'
+import { getCenterNodesAPI, getClusterNodesAPI } from '@/apis/clickstream_node.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -13,32 +13,39 @@ const myChart = ref(null)
 
 onMounted(async () => {
   myChart.value = echarts.init(document.getElementById('container'))
-  myChart.value.on('click', params => {
-    const { data: cls } = params
-    router.push({ path: `/word-cloud/${route.params.date}`, query: { center: cls.dcDictIdx } })
-  })
-  if (route.query.center) await getDetail(route.params.date, route.query.center)
-  else await getCenter(route.params.date)
+  if (route.query.center) await getClusterNodes(route.params.date, route.query.center)
+  else {
+    myChart.value.on('click', params => {
+      const { data: cls } = params
+      router.push({ path: `/word-cloud/${route.params.date}`, query: { center: cls.dcDictIdx } })
+    })
+    await getCenterNodes(route.params.date)
+  }
   renderWordCloud(clsDataList.value)
 })
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (from.fullPath === to.fullPath) return
-  else if (to.query.center) await getDetail(to.params.date, to.query.center)
-  else await getCenter(to.params.date)
+  if (to.query.center) await getClusterNodes(to.params.date, to.query.center)
+  else {
+    myChart.value.on('click', params => {
+      const { data: cls } = params
+      routers.push({ path: `/word-cloud/${route.params.date}`, query: { center: cls.dcDictIdx } })
+    })
+    await getCenterNodes(to.params.date)
+  }
   renderWordCloud(clsDataList.value)
 })
 
-const getCenter = async dateStr => {
-  const res = await getCenterAPI(dateStr)
-  clsDataList.value = res.data.slice(0, 200)
+const getCenterNodes = async dateStr => {
+  const res = await getCenterNodesAPI(dateStr)
+  clsDataList.value = res.data
   clsDataList.value.forEach(i => {
     i.value = i.density
   })
 }
 
-const getDetail = async (dateStr, center) => {
-  const res = await getDetailAPI(dateStr, center)
+const getClusterNodes = async (dateStr, center) => {
+  const res = await getClusterNodesAPI(dateStr, center)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
     i.value = i.density
@@ -109,11 +116,6 @@ const renderWordCloud = data => {
 
 const goBack = e => {
   router.back()
-  let target = e.target
-  if (target.nodeName == 'SPAN' || target.nodeName == 'I') {
-    target = e.target.parentNode
-  }
-  target.blur()
 }
 
 const onClickExportImg = () => {
@@ -127,8 +129,8 @@ const onClickExportImg = () => {
 <template>
   <div class="word-cloud">
     <div class="btn-box">
-      <el-button @click="goBack" class="back">返回</el-button>
-      <el-button type="primary" @click="onClickExportImg">导出</el-button>
+      <el-button @click="goBack" v-blur-fix class="back">返回</el-button>
+      <el-button type="primary" v-blur-fix @click="onClickExportImg">保存图片</el-button>
     </div>
     <div id="container"></div>
   </div>

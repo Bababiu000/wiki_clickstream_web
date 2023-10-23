@@ -4,19 +4,20 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
 import 'echarts-wordcloud'
 import { useWindowSize } from '@vueuse/core'
 import { exportToExcel } from '@/utils/dataExport.js'
-import { getListAPI } from '@/apis/clickstream.js'
+import { getNodeListAPI } from '@/apis/clickstream_node.js'
 import { ElFormItem } from 'element-plus'
 
 const { height } = useWindowSize()
 
 const route = useRoute()
 const router = useRouter()
+
 const clsDataList = ref([])
-
 const curDate = ref(route.params.date)
+const tableRef = ref(null)
 
-const getList = async () => {
-  const res = await getListAPI(
+const getNodeList = async () => {
+  const res = await getNodeListAPI(
     curDate.value,
     pageNum.value,
     pageSize.value,
@@ -29,10 +30,11 @@ const getList = async () => {
     i.members_name = i.members.map(i => i.name).join(', ')
     i.expand = false
   })
+  tableRef.value.setScrollTop(0)
 }
 
 onMounted(async () => {
-  await getList()
+  await getNodeList()
 })
 
 const total = ref(0)
@@ -71,7 +73,7 @@ const exportDataList = ref([])
 const showDialog = ref(false)
 const fileName = ref(route.params.date)
 const getAllData = async () => {
-  const res = await getListAPI(curDate.value, 1, total.value)
+  const res = await getNodeListAPI(curDate.value, 1, total.value)
   console.log(res)
   exportDataList.value = res.data.list
   exportDataList.value.forEach(i => {
@@ -89,7 +91,7 @@ const toWordCloud = center => {
   else router.push({ path: `/word-cloud/${curDate.value}` })
 }
 
-const toTree = center => {
+const toGraph = center => {
   if (center) router.push({ path: `/graph/${curDate.value}`, query: { center: center } })
   else router.push({ path: `/graph/${curDate.value}` })
 }
@@ -108,7 +110,7 @@ onBeforeRouteUpdate(async (to, from) => {
     pageSize.value = 10
     queryParams.value.keyword = ''
   }
-  await getList()
+  await getNodeList()
 })
 </script>
 
@@ -128,7 +130,7 @@ onBeforeRouteUpdate(async (to, from) => {
             <i-ep-search></i-ep-search>
           </template>
         </el-input>
-        <el-button class="search-btn" type="primary" @click="search">
+        <el-button class="search-btn" type="primary" @click="search" v-blur-fix>
           <i-ep-search style="padding-left: 4px"></i-ep-search>
         </el-button>
       </div>
@@ -137,6 +139,9 @@ onBeforeRouteUpdate(async (to, from) => {
       </el-button>
       <el-button class="word-cloud-btn" type="primary" plain @click="toWordCloud()">
         查看中心词词云图
+      </el-button>
+      <el-button class="graph-btn" type="primary" plain @click="toGraph()">
+        查看中心词关系图
       </el-button>
     </div>
     <div class="main-container">
@@ -151,6 +156,7 @@ onBeforeRouteUpdate(async (to, from) => {
           :style="{ height: height - 167 + 'px' }"
           border
           stripe
+          ref="tableRef"
         >
           <el-table-column prop="label" label="主题" width="90" />
           <el-table-column prop="name" label="中心词" width="240" />
@@ -185,7 +191,7 @@ onBeforeRouteUpdate(async (to, from) => {
                 <el-button size="small" @click="toWordCloud(scope.row.dcDictIdx)">
                   查看词云图
                 </el-button>
-                <el-button size="small" @click="toTree(scope.row.dcDictIdx)">查看关系图</el-button>
+                <el-button size="small" @click="toGraph(scope.row.dcDictIdx)">查看关系图</el-button>
               </div>
             </template>
           </el-table-column>
@@ -237,7 +243,7 @@ onBeforeRouteUpdate(async (to, from) => {
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="showDialog = false">取消</el-button>
-          <el-button type="primary" @click="exportToExcel('el-table', fileName)">
+          <el-button type="primary" @click="exportToExcel('el-table', fileName)" v-blur-fix>
             确认导出
           </el-button>
         </span>
