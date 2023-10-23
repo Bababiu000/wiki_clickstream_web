@@ -3,6 +3,7 @@ import Layout from '@/views/Layout/index.vue'
 import Home from '@/views/Home/index.vue'
 import WordCloud from '@/views/WordCloud/index.vue'
 import Graph from '@/views/Graph/index.vue'
+import NotFound from '@/views/NotFound/index.vue'
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
     path: '/graph/:date',
     name: 'Graph',
     component: Graph
+  },
+  {
+    path: '/:path(.*)',
+    name: 'NotFound',
+    component: NotFound
   }
 ]
 
