@@ -2,8 +2,8 @@ import axios from 'axios'
 import { ElLoading } from 'element-plus'
 
 const http = axios.create({
-  baseURL: 'http://localhost:8080',
-  timeout: 5000
+  baseURL: import.meta.env.VITE_BASE_URL,
+  timeout: 10000
 })
 
 let loadingInstance = null
