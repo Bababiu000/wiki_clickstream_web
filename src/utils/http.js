@@ -3,7 +3,7 @@ import { ElLoading } from 'element-plus'
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
-  timeout: 10000
+  timeout: 30000
 })
 
 let loadingInstance = null
