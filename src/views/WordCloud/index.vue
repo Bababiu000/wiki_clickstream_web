@@ -1,42 +1,72 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
+import {
+  useRoute,
+  useRouter,
+  onBeforeRouteUpdate,
+  RouteLocationNormalizedLoaded,
+  Router
+} from 'vue-router'
 import * as echarts from 'echarts'
 import 'echarts-wordcloud'
-import { exportImg } from '@/utils/dataExport.js'
-import { getCenterNodesAPI, getClusterNodesAPI } from '@/apis/clickstream_node.js'
+import { exportImg } from '@/utils/dataExport'
+import { getCenterNodesAPI, getClusterNodesAPI } from '@/apis/clickstream_node'
 
-const route = useRoute()
-const router = useRouter()
-const clsDataList = ref([])
-const myChart = ref(null)
+interface GraphNode {
+  name: string
+  dcDictIdx: number
+  density: number
+  value: number
+}
+
+const router: Router = useRouter()
+const route: RouteLocationNormalizedLoaded = useRoute()
+const myChart: Ref<echarts.EChartsType | null> = ref(null)
+const clsDataList: Ref<GraphNode[]> = ref([])
+
+const currDate: ComputedRef<string> = computed(() => {
+  return route.params.date as string
+})
+
+const currCenter: ComputedRef<number | undefined> = computed(() => {
+  const queryCenter = route.query.center
+
+  if (queryCenter === null || queryCenter === undefined) return undefined
+  else return +queryCenter
+})
 
 onMounted(async () => {
   myChart.value = echarts.init(document.getElementById('container'))
-  if (route.query.center) await getClusterNodes(route.params.date, route.query.center)
+  if (currCenter.value) await getClusterNodes(currDate.value, currCenter.value)
   else {
     myChart.value.on('click', params => {
       const { data: cls } = params
-      router.push({ path: `/word-cloud/${route.params.date}`, query: { center: cls.dcDictIdx } })
+      router.push({
+        path: `/word-cloud/${currDate.value}`,
+        query: { center: (cls as GraphNode).dcDictIdx }
+      })
     })
-    await getCenterNodes(route.params.date)
+    await getCenterNodes(currDate.value)
   }
-  renderWordCloud(clsDataList.value)
+  renderWordCloud()
 })
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (to.query.center) await getClusterNodes(to.params.date, to.query.center)
+  if (to.query.center) await getClusterNodes(to.params.date as string, +to.query.center)
   else {
-    myChart.value.on('click', params => {
+    myChart.value!.on('click', params => {
       const { data: cls } = params
-      routers.push({ path: `/word-cloud/${route.params.date}`, query: { center: cls.dcDictIdx } })
+      router.push({
+        path: `/word-cloud/${currDate.value}`,
+        query: { center: (cls as GraphNode).dcDictIdx }
+      })
     })
-    await getCenterNodes(to.params.date)
+    await getCenterNodes(to.params.date as string)
   }
-  renderWordCloud(clsDataList.value)
+  renderWordCloud()
 })
 
-const getCenterNodes = async dateStr => {
+const getCenterNodes = async (dateStr: string) => {
   const res = await getCenterNodesAPI(dateStr)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
@@ -44,7 +74,7 @@ const getCenterNodes = async dateStr => {
   })
 }
 
-const getClusterNodes = async (dateStr, center) => {
+const getClusterNodes = async (dateStr: string, center: number) => {
   const res = await getClusterNodesAPI(dateStr, center)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
@@ -52,7 +82,7 @@ const getClusterNodes = async (dateStr, center) => {
   })
 }
 
-const renderWordCloud = data => {
+const renderWordCloud = () => {
   const option = {
     series: [
       {
@@ -107,21 +137,19 @@ const renderWordCloud = data => {
           }
         },
         // 数据必须是一个数组，数组是对象，对象必须有name和value属性
-        data
+        data: clsDataList.value
       }
     ]
   }
-  myChart.value.setOption(option)
+  myChart.value!.setOption(option)
 }
 
-const goBack = e => {
+const goBack = () => {
   router.back()
 }
 
 const onClickExportImg = () => {
-  let fileName = `${route.params.date} ${
-    route.query.center ? clsDataList.value[0].name : ''
-  } 词云图`
+  let fileName = `${currDate.value} ${currCenter.value ? clsDataList.value[0].name : ''} 词云图`
   exportImg(fileName, 'container')
 }
 </script>

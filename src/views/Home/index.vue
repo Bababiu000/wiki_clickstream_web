@@ -1,24 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter, onBeforeRouteUpdate } from 'vue-router'
+import {
+  useRoute,
+  useRouter,
+  onBeforeRouteUpdate,
+  RouteLocationNormalizedLoaded,
+  Router,
+RouteLocationNormalized
+} from 'vue-router'
 import 'echarts-wordcloud'
 import { useWindowSize } from '@vueuse/core'
-import { exportToExcel } from '@/utils/dataExport.js'
-import { getNodeListAPI } from '@/apis/clickstream_node.js'
-import { ElFormItem } from 'element-plus'
+import { exportToExcel } from '@/utils/dataExport'
+import { getNodeListAPI } from '@/apis/clickstream_node'
+import { ElFormItem, ElTable } from 'element-plus'
 
 const { height } = useWindowSize()
 
-const route = useRoute()
-const router = useRouter()
+const router: Router = useRouter()
+const route: RouteLocationNormalizedLoaded = useRoute()
 
-const clsDataList = ref([])
-const curDate = ref(route.params.date)
-const tableRef = ref(null)
+const clsDataList: Ref<ClsItem[]> = ref([])
+const currDate: ComputedRef<string> = computed(() => {
+  return route.params.date as string
+})
+const tableRef: Ref<InstanceType<typeof ElTable> |null> = ref(null)
+
+interface ClsItem {
+  id: number
+  name: string
+  dictIdx: string
+  dcDictIdx: string
+  density: number
+  value: number
+  expand: boolean
+  members: ClsItem[]
+  membersName: string
+}
 
 const getNodeList = async () => {
   const res = await getNodeListAPI(
-    curDate.value,
+    currDate.value,
     pageNum.value,
     pageSize.value,
     queryParams.value.keyword
@@ -27,22 +48,25 @@ const getNodeList = async () => {
   total.value = res.data.total
   clsDataList.value.forEach(i => {
     i.value = i.density
-    i.members_name = i.members.map(i => i.name).join(', ')
+    i.membersName = i.members.map(i => i.name).join(', ')
     i.expand = false
   })
-  tableRef.value.setScrollTop(0)
+  tableRef.value!.setScrollTop(0)
 }
 
 onMounted(async () => {
   await getNodeList()
 })
 
-const total = ref(0)
-const pageNum = ref(parseInt(route.query.pageNum) || 1)
-const pageSize = ref(parseInt(route.query.pageSize) || 10)
+const total: Ref<number> = ref(0)
+const pageNum: Ref<number> = ref(parseInt(route.query.pageNum as string) || 1)
+const pageSize: Ref<number> = ref(parseInt(route.query.pageSize as string) || 10)
 
+interface QueryObj{
+  [key: string]: string | number;
+}
 const paramsJump = () => {
-  let queryObj = {}
+  let queryObj: QueryObj = { keyword: '', pageNum: 1, pageSize: 10 }
   if (queryParams.value.keyword) queryObj.keyword = queryParams.value.keyword
   queryObj = {
     ...queryObj,
@@ -50,35 +74,34 @@ const paramsJump = () => {
     pageSize: pageSize.value
   }
   router.push({
-    path: `/${curDate.value}`,
+    path: `/${currDate.value}`,
     query: queryObj
   })
 }
 
-const handleSizeChange = val => {
+const handleSizeChange = (val:number) => {
   pageSize.value = val
   paramsJump()
 }
-const handleCurrentChange = val => {
+const handleCurrentChange = (val:number) => {
   pageNum.value = val
   paramsJump()
 }
 
-const queryParams = ref({ keyword: route.query.keyword || '' })
+const queryParams = ref({ keyword: (route.query.keyword as string) || '' })
 const search = () => {
   paramsJump()
 }
 
-const exportDataList = ref([])
-const showDialog = ref(false)
-const fileName = ref(route.params.date)
+const exportDataList:Ref<ClsItem[]> = ref([])
+const showDialog:Ref<boolean> = ref(false)
+const fileName:Ref<string> = ref(route.params.date as string)
 const getAllData = async () => {
-  const res = await getNodeListAPI(curDate.value, 1, total.value)
-  console.log(res)
+  const res = await getNodeListAPI(currDate.value, 1, total.value)
   exportDataList.value = res.data.list
   exportDataList.value.forEach(i => {
     i.value = i.density
-    i.members_name = i.members.map(i => i.name).join(', ')
+    i.membersName = i.members.map(i => i.name).join(', ')
   })
 }
 const onClickExportToExcel = async () => {
@@ -86,19 +109,18 @@ const onClickExportToExcel = async () => {
   showDialog.value = true
 }
 
-const toWordCloud = center => {
-  if (center) router.push({ path: `/word-cloud/${curDate.value}`, query: { center: center } })
-  else router.push({ path: `/word-cloud/${curDate.value}` })
+const toWordCloud = (center?: number | undefined) => {
+  if (center) router.push({ path: `/word-cloud/${currDate.value}`, query: { center: center } })
+  else router.push({ path: `/word-cloud/${currDate.value}` })
 }
 
-const toGraph = center => {
-  if (center) router.push({ path: `/graph/${curDate.value}`, query: { center: center } })
-  else router.push({ path: `/graph/${curDate.value}` })
+const toGraph = (center?: number | undefined) => {
+  if (center) router.push({ path: `/graph/${currDate.value}`, query: { center: center } })
+  else router.push({ path: `/graph/${currDate.value}` })
 }
 
-onBeforeRouteUpdate(async (to, from) => {
+onBeforeRouteUpdate(async (to:RouteLocationNormalized, from:RouteLocationNormalized) => {
   if (to.name === from.name && to.params.date !== from.params.date) {
-    curDate.value = to.params.date
     pageNum.value = 1
     pageSize.value = 10
     queryParams.value.keyword = ''
@@ -163,15 +185,15 @@ onBeforeRouteUpdate(async (to, from) => {
           <el-table-column prop="density" label="密度" width="90" />
           <el-table-column prop="members" label="外围词">
             <template #default="scope">
-              <el-tooltip :content="scope.row.members_name" placement="top-start" disabled>
-                <span v-if="scope.row.members_name.length <= 400">
-                  {{ scope.row.members_name }}
+              <el-tooltip :content="scope.row.membersName" placement="top-start" disabled>
+                <span v-if="scope.row.membersName.length <= 400">
+                  {{ scope.row.membersName }}
                 </span>
                 <span v-else>
                   {{
                     scope.row.expand
-                      ? scope.row.members_name
-                      : scope.row.members_name.substr(0, 400).concat('...')
+                      ? scope.row.membersName
+                      : scope.row.membersName.substr(0, 400).concat('...')
                   }}
                   <span class="expand" @click="scope.row.expand = !scope.row.expand">
                     {{ scope.row.expand ? '收起' : '展开' }}
@@ -231,7 +253,7 @@ onBeforeRouteUpdate(async (to, from) => {
         <el-table-column prop="density" label="密度" width="90" />
         <el-table-column prop="members" label="外围词">
           <template #default="scope">
-            {{ scope.row.members_name }}
+            {{ scope.row.membersName }}
           </template>
         </el-table-column>
         <el-table-column label="总词数" width="90">

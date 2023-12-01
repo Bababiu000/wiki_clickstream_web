@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import Aside from './compoments/Aside.vue'
 </script>
 

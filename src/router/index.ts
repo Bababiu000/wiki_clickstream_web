@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { Router, createRouter, createWebHashHistory } from 'vue-router'
 import Layout from '@/views/Layout/index.vue'
 import Home from '@/views/Home/index.vue'
 import WordCloud from '@/views/WordCloud/index.vue'
@@ -35,7 +35,7 @@ const routes = [
   }
 ]
 
-const router = createRouter({
+const router: Router = createRouter({
   history: createWebHashHistory(),
   routes
 })

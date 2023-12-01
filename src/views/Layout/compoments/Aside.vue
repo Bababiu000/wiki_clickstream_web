@@ -1,3 +1,39 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { RouteLocationNormalizedLoaded, Router, useRoute, useRouter } from 'vue-router'
+import { getDateRangeAPI } from '@/apis/clickstream_node'
+
+const route: RouteLocationNormalizedLoaded = useRoute()
+const router: Router = useRouter()
+
+const years: Ref<number[]> = ref([])
+const months: Ref<number[]> = ref([])
+const maxYear: Ref<number> = ref(0)
+const maxMonth: Ref<number> = ref(0)
+
+const getDateRange = async (): Promise<void> => {
+  const res = await getDateRangeAPI()
+  const dateRange = res.data
+  years.value = dateRange.years
+  months.value = dateRange.months
+  maxYear.value = dateRange.maxYear
+  maxMonth.value = dateRange.maxMonth
+}
+
+const currDate: ComputedRef<string | undefined> = computed(() => {
+  if (!route.params.date) return undefined
+  else route.params.date as string
+})
+
+onMounted(async () => {
+  await getDateRange()
+  if (!currDate.value)
+    router.push({
+      path: `/${maxYear.value}-${maxMonth.value}`
+    })
+})
+</script>
+
 <template>
   <div class="menu">
     <h3 class="menu-title">wiki cls 数据可视化</h3>
@@ -18,37 +54,6 @@
     </el-menu>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getDateRangeAPI } from '@/apis/clickstream_node.js'
-
-const route = useRoute()
-const router = useRouter()
-
-const years = ref([])
-const months = ref({})
-const maxYear = ref(0)
-const maxMonth = ref(0)
-
-const getDateRange = async () => {
-  const res = await getDateRangeAPI()
-  const dateRange = res.data
-  years.value = dateRange.years
-  months.value = dateRange.months
-  maxYear.value = dateRange.maxYear
-  maxMonth.value = dateRange.maxMonth
-}
-
-onMounted(async () => {
-  await getDateRange()
-  if (!route.params.date)
-    router.push({
-      path: `/${maxYear.value}-${maxMonth.value}`
-    })
-})
-</script>
 
 <style lang="scss">
 .menu {

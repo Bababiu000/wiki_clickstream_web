@@ -2,7 +2,7 @@ import FileSaver from 'file-saver'
 import * as XLSX from 'xlsx'
 import * as echarts from 'echarts'
 
-export const exportToExcel = (domId, filename = 'data') => {
+export const exportToExcel = (domId: string, filename: string = 'data') => {
   const xlsxParam = { raw: true } //转化成Excel使用原始格式
   const elTable = XLSX.utils.table_to_book(document.getElementById(domId), xlsxParam)
   const wbout = XLSX.write(elTable, { bookType: 'xlsx', bookSST: true, type: 'array' })
@@ -16,9 +16,9 @@ export const exportToExcel = (domId, filename = 'data') => {
   return wbout
 }
 
-export const exportImg = (title = 'image', echartsBox) => {
-  let myChart = echarts.getInstanceByDom(document.getElementById(echartsBox))
-  let picInfo = myChart.getDataURL({
+export const exportImg = (title: string = 'image', echartsBox: string): void => {
+  let myChart: echarts.EChartsType = echarts.getInstanceByDom(document.getElementById(echartsBox)!)!
+  let picInfo: string = myChart.getDataURL({
     pixelRatio: 1,
     backgroundColor: '#fff'
   })
