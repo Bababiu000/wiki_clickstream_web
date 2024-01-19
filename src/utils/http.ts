@@ -1,5 +1,5 @@
 import axios, { InternalAxiosRequestConfig, AxiosError, AxiosResponse, AxiosInstance } from 'axios'
-import { ElLoading } from 'element-plus'
+import { ElLoading, ElMessage } from 'element-plus'
 
 const http: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
@@ -25,6 +25,7 @@ http.interceptors.response.use(
     return response.data
   },
   (error: AxiosError) => {
+    ElMessage.error(error)
     return Promise.reject(error)
   }
 )

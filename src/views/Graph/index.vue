@@ -23,6 +23,7 @@ interface ClsEdge {
   weight: number
   value: number
   date: Date
+  lang: string
 }
 interface ClsNode {
   id: number
@@ -32,6 +33,7 @@ interface ClsNode {
   dcDictIdx: number
   date: Date
   label: number
+  lang: string
 }
 interface GraphNode {
   id: string
@@ -47,9 +49,8 @@ interface GraphEdge {
 const clsNodes: Ref<ClsNode[]> = ref([])
 const clsEdges: Ref<ClsEdge[]> = ref([])
 
-const currDate: ComputedRef<string> = computed(() => {
-  return route.params.date as string
-})
+const lang: Ref<string> = ref(route.params.lang as string)
+const currDate: Ref<string> = ref(route.params.date as string)
 
 const currCenter: ComputedRef<number | undefined> = computed(() => {
   const queryCenter = route.query.center
@@ -61,37 +62,37 @@ const currCenter: ComputedRef<number | undefined> = computed(() => {
 onMounted(async () => {
   myChart.value = echarts.init(document.getElementById('container'))
   if (currCenter.value) {
-    getClusterNodes(currDate.value, currCenter.value!)
-    await getClusterEdges(currDate.value, currCenter.value!)
+    getClusterNodes(lang.value, currDate.value, currCenter.value!)
+    await getClusterEdges(lang.value, currDate.value, currCenter.value!)
   } else {
     myChart.value.on('click', (params: any) => {
       const { data: cls } = params
-      router.push({ path: `/graph/${currDate.value}`, query: { center: cls.dcDictIdx } })
+      router.push({ name: 'Graph', query: { center: cls.dcDictIdx } })
     })
-    await getCenterNodes(currDate.value)
-    await getCenterEdges(currDate.value)
+    await getCenterNodes(lang.value, currDate.value)
+    await getCenterEdges(lang.value, currDate.value)
   }
   initOption()
   renderGraph()
 })
 
-const getCenterNodes = async (dateStr: string): Promise<void> => {
-  const res = await getCenterNodesAPI(dateStr)
+const getCenterNodes = async (lang: string, dateStr: string): Promise<void> => {
+  const res = await getCenterNodesAPI(lang, dateStr)
   clsNodes.value = res.data
 }
 
-const getCenterEdges = async (dateStr: string): Promise<void> => {
-  const res = await getCenterEdgesAPI(dateStr)
+const getCenterEdges = async (lang: string, dateStr: string): Promise<void> => {
+  const res = await getCenterEdgesAPI(lang, dateStr)
   clsEdges.value = res.data
 }
 
-const getClusterNodes = async (dateStr: string, center: number): Promise<void> => {
-  const res = await getClusterNodesAPI(dateStr, center)
+const getClusterNodes = async (lang: string, dateStr: string, center: number): Promise<void> => {
+  const res = await getClusterNodesAPI(lang, dateStr, center)
   clsNodes.value = res.data
 }
 
-const getClusterEdges = async (dateStr: string, center: number): Promise<void> => {
-  const res = await getClusterEdgesAPI(dateStr, center)
+const getClusterEdges = async (lang: string, dateStr: string, center: number): Promise<void> => {
+  const res = await getClusterEdgesAPI(lang, dateStr, center)
   clsEdges.value = res.data
 }
 
@@ -207,18 +208,18 @@ const onClickExportImg = () => {
 
 onBeforeRouteUpdate(async (to, from) => {
   if (to.query.center) {
-    getClusterNodes(to.params.date as string, +to.query.center)
-    await getClusterEdges(to.params.date as string, +to.query.center)
+    getClusterNodes(lang.value, currDate.value, +to.query.center)
+    await getClusterEdges(lang.value, currDate.value, +to.query.center)
   } else {
     myChart.value!.on('click', params => {
       const { data: cls } = params
       router.push({
-        path: `/graph/${currDate.value}`,
+        name: 'Graph',
         query: { center: (cls as GraphNode).dcDictIdx }
       })
     })
-    getCenterNodes(currDate.value)
-    await getCenterEdges(currDate.value)
+    getCenterNodes(lang.value, currDate.value)
+    await getCenterEdges(lang.value, currDate.value)
   }
   initOption()
   renderGraph()

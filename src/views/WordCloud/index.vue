@@ -24,9 +24,8 @@ const route: RouteLocationNormalizedLoaded = useRoute()
 const myChart: Ref<echarts.EChartsType | null> = ref(null)
 const clsDataList: Ref<GraphNode[]> = ref([])
 
-const currDate: ComputedRef<string> = computed(() => {
-  return route.params.date as string
-})
+const lang: Ref<string> = ref(route.params.lang as string)
+const currDate: Ref<string> = ref(route.params.date as string)
 
 const currCenter: ComputedRef<number | undefined> = computed(() => {
   const queryCenter = route.query.center
@@ -37,45 +36,45 @@ const currCenter: ComputedRef<number | undefined> = computed(() => {
 
 onMounted(async () => {
   myChart.value = echarts.init(document.getElementById('container'))
-  if (currCenter.value) await getClusterNodes(currDate.value, currCenter.value)
+  if (currCenter.value) await getClusterNodes(lang.value, currDate.value, currCenter.value)
   else {
     myChart.value.on('click', params => {
       const { data: cls } = params
       router.push({
-        path: `/word-cloud/${currDate.value}`,
+        name: 'WordCloud',
         query: { center: (cls as GraphNode).dcDictIdx }
       })
     })
-    await getCenterNodes(currDate.value)
+    await getCenterNodes(lang.value, currDate.value)
   }
   renderWordCloud()
 })
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (to.query.center) await getClusterNodes(to.params.date as string, +to.query.center)
+  if (to.query.center) await getClusterNodes(lang.value, currDate.value, +to.query.center)
   else {
     myChart.value!.on('click', params => {
       const { data: cls } = params
       router.push({
-        path: `/word-cloud/${currDate.value}`,
+        name: 'WordCloud',
         query: { center: (cls as GraphNode).dcDictIdx }
       })
     })
-    await getCenterNodes(to.params.date as string)
+    await getCenterNodes(lang.value, currDate.value)
   }
   renderWordCloud()
 })
 
-const getCenterNodes = async (dateStr: string) => {
-  const res = await getCenterNodesAPI(dateStr)
+const getCenterNodes = async (lang: string, dateStr: string) => {
+  const res = await getCenterNodesAPI(lang, dateStr)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
     i.value = i.density
   })
 }
 
-const getClusterNodes = async (dateStr: string, center: number) => {
-  const res = await getClusterNodesAPI(dateStr, center)
+const getClusterNodes = async (lang: string, dateStr: string, center: number) => {
+  const res = await getClusterNodesAPI(lang, dateStr, center)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
     i.value = i.density

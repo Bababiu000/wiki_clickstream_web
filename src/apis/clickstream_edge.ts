@@ -1,10 +1,14 @@
 import http from '@/utils/http'
 import { AxiosResponse } from 'axios'
 
-export const getCenterEdgesAPI = (dateStr: string): Promise<AxiosResponse> => {
-  return http.get(`clickstream_edge/center/${dateStr}`)
+export const getCenterEdgesAPI = (lang: string, dateStr: string): Promise<AxiosResponse> => {
+  return http.get(`clickstream_edge/center/${lang}/${dateStr}`)
 }
 
-export const getClusterEdgesAPI = (dateStr: string, center: number): Promise<AxiosResponse> => {
-  return http.get(`clickstream_edge/cluster/${dateStr}`, { params: { center } })
+export const getClusterEdgesAPI = (
+  lang: string,
+  dateStr: string,
+  center: number
+): Promise<AxiosResponse> => {
+  return http.get(`clickstream_edge/cluster/${lang}/${dateStr}`, { params: { center } })
 }
