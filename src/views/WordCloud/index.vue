@@ -1,12 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import {
-  useRoute,
-  useRouter,
-  onBeforeRouteUpdate,
-  RouteLocationNormalizedLoaded,
-  Router
-} from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteUpdate, RouteLocationNormalizedLoaded, Router } from 'vue-router'
 import * as echarts from 'echarts'
 import 'echarts-wordcloud'
 import { exportImg } from '@/utils/dataExport'
@@ -21,7 +15,7 @@ interface GraphNode {
 
 const router: Router = useRouter()
 const route: RouteLocationNormalizedLoaded = useRoute()
-const myChart: Ref<echarts.EChartsType | null> = ref(null)
+let myChart: echarts.EChartsType
 const clsDataList: Ref<GraphNode[]> = ref([])
 
 const lang: Ref<string> = ref(route.params.lang as string)
@@ -35,10 +29,10 @@ const currCenter: ComputedRef<number | undefined> = computed(() => {
 })
 
 onMounted(async () => {
-  myChart.value = echarts.init(document.getElementById('container'))
+  myChart = echarts.init(document.getElementById('container'))
   if (currCenter.value) await getClusterNodes(lang.value, currDate.value, currCenter.value)
   else {
-    myChart.value.on('click', params => {
+    myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'WordCloud',
@@ -53,7 +47,7 @@ onMounted(async () => {
 onBeforeRouteUpdate(async (to, from) => {
   if (to.query.center) await getClusterNodes(lang.value, currDate.value, +to.query.center)
   else {
-    myChart.value!.on('click', params => {
+    myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'WordCloud',
@@ -119,11 +113,9 @@ const renderWordCloud = () => {
             // Random color
             return (
               'rgb(' +
-              [
-                Math.round(Math.random() * 160),
-                Math.round(Math.random() * 160),
-                Math.round(Math.random() * 160)
-              ].join(',') +
+              [Math.round(Math.random() * 160), Math.round(Math.random() * 160), Math.round(Math.random() * 160)].join(
+                ','
+              ) +
               ')'
             )
           }
@@ -140,7 +132,7 @@ const renderWordCloud = () => {
       }
     ]
   }
-  myChart.value!.setOption(option)
+  myChart.setOption(option)
 }
 
 const goBack = () => {

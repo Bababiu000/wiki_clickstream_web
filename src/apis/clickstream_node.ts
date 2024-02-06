@@ -21,10 +21,10 @@ export const getCenterNodesAPI = (lang: string, dateStr: string): Promise<AxiosR
   return http.get(`clickstream_node/center/${lang}/${dateStr}`)
 }
 
-export const getClusterNodesAPI = (
-  lang: string,
-  dateStr: string,
-  center: number
-): Promise<AxiosResponse> => {
+export const getClusterNodesAPI = (lang: string, dateStr: string, center: number): Promise<AxiosResponse> => {
   return http.get(`clickstream_node/cluster/${lang}/${dateStr}`, { params: { center } })
+}
+
+export const getMonthlySimilarityAPI = (lang: string, dateStr1: string, dateStr2: string): Promise<AxiosResponse> => {
+  return http.get(`clickstream_node/similarity/${lang}`, { params: { date1: dateStr1, date2: dateStr2 } })
 }

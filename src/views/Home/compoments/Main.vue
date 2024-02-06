@@ -13,11 +13,14 @@ import { useWindowSize } from '@vueuse/core'
 import { exportToExcel } from '@/utils/dataExport'
 import { getNodeListAPI } from '@/apis/clickstream_node'
 import { ElFormItem, ElTable } from 'element-plus'
+import { useDateStore } from '@/stores/dateStore'
 
 const { height } = useWindowSize()
 
 const router: Router = useRouter()
 const route: RouteLocationNormalizedLoaded = useRoute()
+
+const dateStore = useDateStore()
 
 const clsDataList: Ref<ClsItem[]> = ref([])
 const currDate: Ref<string> = ref(route.params.date as string)
@@ -113,6 +116,11 @@ const toGraph = (center?: number | undefined) => {
   else router.push({ name: 'Graph' })
 }
 
+const toHeatMap = () => {
+  let nearestDate = dateStore.getNearestDate(currDate.value)
+  router.push({ name: 'HeatMap', query: { xDate: currDate.value, yDate: nearestDate } })
+}
+
 onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNormalized) => {
   if (to.name === from.name && (to.params.date !== from.params.date || to.params.lang !== from.params.lang)) {
     currDate.value = to.params.date as string
@@ -155,6 +163,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
       <el-button class="export-btn" type="primary" @click="onClickExportToExcel">导出Excel</el-button>
       <el-button class="word-cloud-btn" type="primary" plain @click="toWordCloud()">查看中心词词云图</el-button>
       <el-button class="graph-btn" type="primary" plain @click="toGraph()">查看中心词关系图</el-button>
+      <el-button class="heat-map-btn" type="primary" plain @click="toHeatMap()">查看月份主题对比图</el-button>
     </div>
     <div class="main-container">
       <div class="table-box">

@@ -2,18 +2,12 @@
 import * as echarts from 'echarts'
 import { getCenterNodesAPI, getClusterNodesAPI } from '@/apis/clickstream_node'
 import { getCenterEdgesAPI, getClusterEdgesAPI } from '@/apis/clickstream_edge'
-import {
-  Router,
-  RouteLocationNormalizedLoaded,
-  useRouter,
-  useRoute,
-  onBeforeRouteUpdate
-} from 'vue-router'
+import { Router, RouteLocationNormalizedLoaded, useRouter, useRoute, onBeforeRouteUpdate } from 'vue-router'
 import { exportImg } from '@/utils/dataExport'
 
 const router: Router = useRouter()
 const route: RouteLocationNormalizedLoaded = useRoute()
-const myChart: Ref<echarts.EChartsType | null> = ref(null)
+let myChart: echarts.EChartsType
 
 interface ClsEdge {
   id: number
@@ -60,12 +54,12 @@ const currCenter: ComputedRef<number | undefined> = computed(() => {
 })
 
 onMounted(async () => {
-  myChart.value = echarts.init(document.getElementById('container'))
+  myChart = echarts.init(document.getElementById('container'))
   if (currCenter.value) {
     getClusterNodes(lang.value, currDate.value, currCenter.value!)
     await getClusterEdges(lang.value, currDate.value, currCenter.value!)
   } else {
-    myChart.value.on('click', (params: any) => {
+    myChart.on('click', (params: any) => {
       const { data: cls } = params
       router.push({ name: 'Graph', query: { center: cls.dcDictIdx } })
     })
@@ -188,13 +182,13 @@ const initOption = () => {
   isShowDirectedEdge.value = false
   isShowEdgeLabel.value = false
 
-  myChart.value!.dispatchAction({
+  myChart.dispatchAction({
     type: 'restore'
   })
 }
 
 const renderGraph = async () => {
-  myChart.value!.setOption(option)
+  myChart.setOption(option)
 }
 
 const goBack = () => {
@@ -211,7 +205,7 @@ onBeforeRouteUpdate(async (to, from) => {
     getClusterNodes(lang.value, currDate.value, +to.query.center)
     await getClusterEdges(lang.value, currDate.value, +to.query.center)
   } else {
-    myChart.value!.on('click', params => {
+    myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'Graph',
