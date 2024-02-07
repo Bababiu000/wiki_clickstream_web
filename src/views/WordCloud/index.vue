@@ -8,7 +8,7 @@ import { getCenterNodesAPI, getClusterNodesAPI } from '@/apis/clickstream_node'
 
 interface GraphNode {
   name: string
-  dcDictIdx: number
+  label: number
   density: number
   value: number
 }
@@ -21,22 +21,23 @@ const clsDataList: Ref<GraphNode[]> = ref([])
 const lang: Ref<string> = ref(route.params.lang as string)
 const currDate: Ref<string> = ref(route.params.date as string)
 
-const currCenter: ComputedRef<number | undefined> = computed(() => {
-  const queryCenter = route.query.center
+const currLabel: ComputedRef<number | undefined> = computed(() => {
+  const queryLabel = route.query.label
 
-  if (queryCenter === null || queryCenter === undefined) return undefined
-  else return +queryCenter
+  if (queryLabel === null || queryLabel === undefined) return undefined
+  else return +queryLabel
 })
 
 onMounted(async () => {
   myChart = echarts.init(document.getElementById('container'))
-  if (currCenter.value) await getClusterNodes(lang.value, currDate.value, currCenter.value)
+
+  if (currLabel.value) await getClusterNodes(lang.value, currDate.value, currLabel.value)
   else {
     myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'WordCloud',
-        query: { center: (cls as GraphNode).dcDictIdx }
+        query: { label: (cls as GraphNode).label }
       })
     })
     await getCenterNodes(lang.value, currDate.value)
@@ -45,13 +46,13 @@ onMounted(async () => {
 })
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (to.query.center) await getClusterNodes(lang.value, currDate.value, +to.query.center)
+  if (to.query.label) await getClusterNodes(lang.value, currDate.value, +to.query.label)
   else {
     myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'WordCloud',
-        query: { center: (cls as GraphNode).dcDictIdx }
+        query: { label: (cls as GraphNode).label }
       })
     })
     await getCenterNodes(lang.value, currDate.value)
@@ -67,8 +68,8 @@ const getCenterNodes = async (lang: string, dateStr: string) => {
   })
 }
 
-const getClusterNodes = async (lang: string, dateStr: string, center: number) => {
-  const res = await getClusterNodesAPI(lang, dateStr, center)
+const getClusterNodes = async (lang: string, dateStr: string, label: number) => {
+  const res = await getClusterNodesAPI(lang, dateStr, label)
   clsDataList.value = res.data
   clsDataList.value.forEach(i => {
     i.value = i.density
@@ -140,7 +141,7 @@ const goBack = () => {
 }
 
 const onClickExportImg = () => {
-  let fileName = `${currDate.value} ${currCenter.value ? clsDataList.value[0].name : ''} 词云图`
+  let fileName = `${lang.value}-${currDate.value}-${currLabel.value ? clsDataList.value[0].name : ''}-词云图`
   exportImg(fileName, 'container')
 }
 </script>

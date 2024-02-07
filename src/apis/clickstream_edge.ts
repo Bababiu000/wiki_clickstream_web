@@ -8,7 +8,7 @@ export const getCenterEdgesAPI = (lang: string, dateStr: string): Promise<AxiosR
 export const getClusterEdgesAPI = (
   lang: string,
   dateStr: string,
-  center: number
+  label: number
 ): Promise<AxiosResponse> => {
-  return http.get(`clickstream_edge/cluster/${lang}/${dateStr}`, { params: { center } })
+  return http.get(`clickstream_edge/cluster/${lang}/${dateStr}`, { params: { label } })
 }

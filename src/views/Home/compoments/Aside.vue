@@ -17,6 +17,11 @@ const langChange = async (lang: TabPaneName): Promise<void> => {
   await dateStore.getDateRange(lang as string)
   router.push({ path: `/${lang}/${latestDate.value}` })
 }
+
+const padZero = (num: number): string => {
+  if (num < 10) return '0' + num
+  return '' + num
+}
 </script>
 
 <template>
@@ -31,7 +36,7 @@ const langChange = async (lang: TabPaneName): Promise<void> => {
         <template #title>
           <span>{{ year }} 年</span>
         </template>
-        <el-menu-item v-for="month in months[year]" :index="`${year}-${month}`">{{ month }} 月</el-menu-item>
+        <el-menu-item v-for="month in months[year]" :index="`${year}-${padZero(month)}`">{{ month }} 月</el-menu-item>
       </el-sub-menu>
     </el-menu>
   </div>

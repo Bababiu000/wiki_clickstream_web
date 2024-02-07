@@ -21,8 +21,8 @@ export const getCenterNodesAPI = (lang: string, dateStr: string): Promise<AxiosR
   return http.get(`clickstream_node/center/${lang}/${dateStr}`)
 }
 
-export const getClusterNodesAPI = (lang: string, dateStr: string, center: number): Promise<AxiosResponse> => {
-  return http.get(`clickstream_node/cluster/${lang}/${dateStr}`, { params: { center } })
+export const getClusterNodesAPI = (lang: string, dateStr: string, label: number): Promise<AxiosResponse> => {
+  return http.get(`clickstream_node/cluster/${lang}/${dateStr}`, { params: { label } })
 }
 
 export const getMonthlySimilarityAPI = (lang: string, dateStr1: string, dateStr2: string): Promise<AxiosResponse> => {

@@ -33,6 +33,7 @@ interface ClsItem {
   dictIdx: string
   dcDictIdx: string
   density: number
+  label: number
   value: number
   expand: boolean
   members: ClsItem[]
@@ -92,7 +93,7 @@ const search = () => {
 
 const exportDataList: Ref<ClsItem[]> = ref([])
 const showDialog: Ref<boolean> = ref(false)
-const fileName: Ref<string> = ref(route.params.date as string)
+const fileName: Ref<string> = ref(`${route.params.lang}-${route.params.date}`)
 const getAllData = async () => {
   const res = await getNodeListAPI(lang.value, currDate.value, 1, total.value)
   exportDataList.value = res.data.list
@@ -106,13 +107,13 @@ const onClickExportToExcel = async () => {
   showDialog.value = true
 }
 
-const toWordCloud = (center?: number | undefined) => {
-  if (center) router.push({ name: 'WordCloud', query: { center: center } })
+const toWordCloud = (label?: number | undefined) => {
+  if (label) router.push({ name: 'WordCloud', query: { label } })
   else router.push({ name: 'WordCloud' })
 }
 
-const toGraph = (center?: number | undefined) => {
-  if (center) router.push({ name: 'Graph', query: { center: center } })
+const toGraph = (label?: number | undefined) => {
+  if (label) router.push({ name: 'Graph', query: { label } })
   else router.push({ name: 'Graph' })
 }
 
@@ -160,7 +161,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
           <i-ep-search style="padding-left: 4px"></i-ep-search>
         </el-button>
       </div>
-      <el-button class="export-btn" type="primary" @click="onClickExportToExcel">导出Excel</el-button>
+      <el-button class="export-btn" type="primary" @click="onClickExportToExcel" v-blur-fix>导出Excel</el-button>
       <el-button class="word-cloud-btn" type="primary" plain @click="toWordCloud()">查看中心词词云图</el-button>
       <el-button class="graph-btn" type="primary" plain @click="toGraph()">查看中心词关系图</el-button>
       <el-button class="heat-map-btn" type="primary" plain @click="toHeatMap()">查看月份主题对比图</el-button>
@@ -205,8 +206,8 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
           <el-table-column label="操作" width="110">
             <template #default="scope">
               <div class="button-cell">
-                <el-button size="small" @click="toWordCloud(scope.row.dcDictIdx)">查看词云图</el-button>
-                <el-button size="small" @click="toGraph(scope.row.dcDictIdx)">查看关系图</el-button>
+                <el-button size="small" @click="toWordCloud(scope.row.label)">查看词云图</el-button>
+                <el-button size="small" @click="toGraph(scope.row.label)">查看关系图</el-button>
               </div>
             </template>
           </el-table-column>
@@ -242,6 +243,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
         border
         stripe
       >
+        <el-table-column prop="label" label="主题" width="90" />
         <el-table-column prop="name" label="中心词" width="240" />
         <el-table-column prop="density" label="密度" width="90" />
         <el-table-column prop="members" label="外围词">

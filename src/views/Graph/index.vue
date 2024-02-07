@@ -32,7 +32,7 @@ interface ClsNode {
 interface GraphNode {
   id: string
   name: string
-  dcDictIdx: number
+  label: number
   symbolSize: number
 }
 interface GraphEdge {
@@ -46,22 +46,22 @@ const clsEdges: Ref<ClsEdge[]> = ref([])
 const lang: Ref<string> = ref(route.params.lang as string)
 const currDate: Ref<string> = ref(route.params.date as string)
 
-const currCenter: ComputedRef<number | undefined> = computed(() => {
-  const queryCenter = route.query.center
+const currLabel: ComputedRef<number | undefined> = computed(() => {
+  const queryLabel = route.query.label
 
-  if (queryCenter === null || queryCenter === undefined) return undefined
-  else return +queryCenter
+  if (queryLabel === null || queryLabel === undefined) return undefined
+  else return +queryLabel
 })
 
 onMounted(async () => {
   myChart = echarts.init(document.getElementById('container'))
-  if (currCenter.value) {
-    getClusterNodes(lang.value, currDate.value, currCenter.value!)
-    await getClusterEdges(lang.value, currDate.value, currCenter.value!)
+  if (currLabel.value) {
+    getClusterNodes(lang.value, currDate.value, currLabel.value!)
+    await getClusterEdges(lang.value, currDate.value, currLabel.value!)
   } else {
     myChart.on('click', (params: any) => {
       const { data: cls } = params
-      router.push({ name: 'Graph', query: { center: cls.dcDictIdx } })
+      router.push({ name: 'Graph', query: { label: cls.label } })
     })
     await getCenterNodes(lang.value, currDate.value)
     await getCenterEdges(lang.value, currDate.value)
@@ -80,13 +80,13 @@ const getCenterEdges = async (lang: string, dateStr: string): Promise<void> => {
   clsEdges.value = res.data
 }
 
-const getClusterNodes = async (lang: string, dateStr: string, center: number): Promise<void> => {
-  const res = await getClusterNodesAPI(lang, dateStr, center)
+const getClusterNodes = async (lang: string, dateStr: string, label: number): Promise<void> => {
+  const res = await getClusterNodesAPI(lang, dateStr, label)
   clsNodes.value = res.data
 }
 
-const getClusterEdges = async (lang: string, dateStr: string, center: number): Promise<void> => {
-  const res = await getClusterEdgesAPI(lang, dateStr, center)
+const getClusterEdges = async (lang: string, dateStr: string, label: number): Promise<void> => {
+  const res = await getClusterEdgesAPI(lang, dateStr, label)
   clsEdges.value = res.data
 }
 
@@ -159,7 +159,7 @@ const initOption = () => {
       id: i.dictIdx + '',
       name: i.name,
       symbolSize: (i.density / maxDensity) * 100,
-      dcDictIdx: i.dcDictIdx
+      label: i.label
     }
   })
 
@@ -196,20 +196,20 @@ const goBack = () => {
 }
 
 const onClickExportImg = () => {
-  let fileName = `${currDate.value} ${currCenter.value ? clsNodes.value[0].name : ''} 关系图`
+  let fileName = `${lang.value}-${currDate.value}-${currLabel.value ? clsNodes.value[0].name : ''}-关系图`
   exportImg(fileName, 'container')
 }
 
 onBeforeRouteUpdate(async (to, from) => {
-  if (to.query.center) {
-    getClusterNodes(lang.value, currDate.value, +to.query.center)
-    await getClusterEdges(lang.value, currDate.value, +to.query.center)
+  if (to.query.label) {
+    getClusterNodes(lang.value, currDate.value, +to.query.label)
+    await getClusterEdges(lang.value, currDate.value, +to.query.label)
   } else {
     myChart.on('click', params => {
       const { data: cls } = params
       router.push({
         name: 'Graph',
-        query: { center: (cls as GraphNode).dcDictIdx }
+        query: { label: (cls as GraphNode).label }
       })
     })
     getCenterNodes(lang.value, currDate.value)
@@ -221,7 +221,7 @@ onBeforeRouteUpdate(async (to, from) => {
 
 let undirectedEdgesStorage: GraphEdge[] = []
 const isShowDirectedEdge = ref(false)
-const showDirectedEdgeChange = (flag: boolean) => {
+const showDirectedEdgeChange: (flag: string | number | boolean) => any = flag => {
   const series = option.series as echarts.GraphSeriesOption[]
   if (flag) {
     series[0].links = directedEdgesStorage
@@ -235,9 +235,9 @@ const showDirectedEdgeChange = (flag: boolean) => {
 }
 
 const isShowEdgeLabel = ref(false)
-const showEdgeLabelChange = (flag: boolean) => {
+const showEdgeLabelChange: (flag: string | number | boolean) => any = flag => {
   const series = option.series as echarts.GraphSeriesOption[]
-  series[0].edgeLabel!.show = flag
+  series[0].edgeLabel!.show = flag as boolean
   renderGraph()
 }
 const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
@@ -272,14 +272,9 @@ const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
         class="switch"
         v-model="isShowDirectedEdge"
         active-text="显示有向边"
-        @change:boolean="showDirectedEdgeChange"
+        @change="showDirectedEdgeChange"
       />
-      <el-switch
-        class="switch"
-        v-model="isShowEdgeLabel"
-        active-text="显示跳转次数"
-        @change:boolean="showEdgeLabelChange"
-      />
+      <el-switch class="switch" v-model="isShowEdgeLabel" active-text="显示跳转次数" @change="showEdgeLabelChange" />
     </div>
     <div class="btn-box">
       <el-button @click="goBack" class="back" v-blur-fix>返回</el-button>
