@@ -10,7 +10,7 @@ import {
 } from 'echarts/components'
 import { HeatmapChart, HeatmapSeriesOption } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
-import { getClusterNodesAPI, getMonthlySimilarityAPI } from '@/apis/clickstream_node'
+import { getClusterNodesNameAPI, getMonthlySimilarityAPI } from '@/apis/clickstream_node'
 import { storeToRefs } from 'pinia'
 import { useDateStore } from '@/stores/dateStore'
 import {
@@ -30,9 +30,6 @@ type EChartsOption = echarts.ComposeOption<
 
 let myChart: echarts.EChartsType
 let option: EChartsOption
-
-let vennChart: echarts.EChartsType
-let vennOption
 
 const router: Router = useRouter()
 const route: RouteLocationNormalizedLoaded = useRoute()
@@ -173,59 +170,35 @@ const dateChange = async () => {
   router.push({ name: 'HeatMap', query: { xDate: xDate.value, yDate: yDate.value } })
 }
 
-interface ClsItem {
-  id: number
-  name: string
-  dictIdx: string
-  dcDictIdx: string
-  density: number
-  value: number
-  expand: boolean
-  members: ClsItem[]
-  membersName: string
-}
-const setA: Ref<string[]> = ref([])
-const setB: Ref<string[]> = ref([])
+const setX: Ref<string[]> = ref([])
+const setY: Ref<string[]> = ref([])
+const labelX: Ref<number> = ref(0)
+const labelY: Ref<number> = ref(0)
+const similarity: Ref<number> = ref(0)
 const dialogTableVisible: Ref<boolean> = ref(false)
-const getClusterNodes = async (lang: string, dateStr: string, center: number) => {
-  const res = await getClusterNodesAPI(lang, dateStr, center)
+
+const getClusterNodesName = async (lang: string, dateStr: string, label: number) => {
+  const res = await getClusterNodesNameAPI(lang, dateStr, label)
+  return res.data
 }
 
-const renderVenn = () => {
-  vennChart = echarts.init(document.getElementById('vennChart'))
-  vennOption = {
-    series: [
-      {
-        type: 'venn',
-        data: [
-          { name: 'A', value: 100 },
-          { name: 'B', value: 100 },
-          { name: 'A&B', value: 30 }
-        ],
-        itemStyle: {
-          emphasis: {
-            label: {
-              show: true,
-              formatter: '{b}: {c}'
-            }
-          }
-        }
-      }
-    ]
+const showDetail = async (params: any) => {
+  if (params.seriesType === 'heatmap') {
+    let [x, y, value] = params.value
+    // 坐标+1恰好为主题编号
+    labelX.value = x + 1
+    labelY.value = y + 1
+    similarity.value = value
+    setX.value = await getClusterNodesName(lang.value, xDate.value, labelX.value)
+    setY.value = await getClusterNodesName(lang.value, yDate.value, labelY.value)
+    dialogTableVisible.value = true
   }
-
-  vennChart.setOption(option)
 }
 
 onMounted(async () => {
   myChart = echarts.init(document.getElementById('container'))
-  myChart.on('click', (params: any) => {
-    if (params.seriesType === 'heatmap') {
-      dialogTableVisible.value = true
-      let [x, y, value] = params.value
-      // alert(`坐标: (${x}, ${y}), 相似度: ${(value * 100).toFixed(2)}%
-      //       <br/>${xDate.value}主题${x} 对比 ${yDate.value}主题${y}`)
-    }
+  myChart.on('click', (params: echarts.ECElementEvent) => {
+    showDetail(params)
   })
   await getMonthlySimilarity(lang.value, xDate.value, yDate.value)
   renderHeatMap()
@@ -269,13 +242,23 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
       </div>
     </div>
     <el-dialog v-model="dialogTableVisible" title="详情" width="800">
-      123
-      <div id="vennChart" style="width: 600px; height: 400px"></div>
+      <div class="detail-item">
+        <span class="detail-item-title">相似度:</span>
+        {{ (similarity * 100).toFixed(2) }}%
+      </div>
+      <div class="detail-item">
+        <span class="detail-item-title">{{ xDate }}主题{{ labelX }}:</span>
+        {{ setX.join(', ') }}
+      </div>
+      <div class="detail-item">
+        <span class="detail-item-title">{{ yDate }}主题{{ labelY }}:</span>
+        {{ setY.join(', ') }}
+      </div>
     </el-dialog>
     <div id="container"></div>
   </div>
 </template>
-<style lang="scss" scoped>
+<style lang="scss">
 .heat-map {
   width: 100%;
   height: 100vh;
@@ -290,6 +273,17 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
     margin-top: 30px;
     .date {
       margin-right: 30px;
+    }
+  }
+
+  .el-dialog__body {
+    padding-top: 10px;
+  }
+
+  .detail-item {
+    padding-bottom: 15px;
+    .detail-item-title {
+      color: var(--el-text-color-primary);
     }
   }
 
