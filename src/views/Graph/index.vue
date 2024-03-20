@@ -42,6 +42,7 @@ interface GraphEdge {
 }
 const clsNodes: Ref<ClsNode[]> = ref([])
 const clsEdges: Ref<ClsEdge[]> = ref([])
+let nodes: GraphNode[] = []
 
 const lang: Ref<string> = ref(route.params.lang as string)
 const currDate: Ref<string> = ref(route.params.date as string)
@@ -102,7 +103,17 @@ let option: echarts.EChartsOption = {
       label: {
         show: true,
         position: 'top', // 调整节点名称的位置
-        color: 'black' // 设置节点名称的颜色
+        color: 'black', // 设置节点名称的颜色
+        // 高亮样式
+        emphasis: {
+          textStyle: {
+            color: '#000' // 高亮节点文字颜色
+          },
+          // 高亮节点背景样式
+          backgroundColor: 'yellow',
+          padding: 5, // 背景内边距
+          borderRadius: 5 // 背景圆角
+        }
       },
       itemStyle: {
         color: (params: any) => {
@@ -154,7 +165,7 @@ let directedEdgesStorage: GraphEdge[] = []
 const initOption = () => {
   let centerNode = clsNodes.value[0]
   let maxDensity = centerNode.density
-  let data: GraphNode[] = clsNodes.value.map(i => {
+  nodes = clsNodes.value.map(i => {
     return {
       id: i.dictIdx + '',
       name: i.name,
@@ -174,7 +185,7 @@ const initOption = () => {
   directedEdgesStorage = links
   convertToUndirectedEdges(links)
   const series = option.series as echarts.GraphSeriesOption[]
-  series[0].data = data
+  series[0].data = nodes
   series[0].links = links
   series[0].edgeLabel!.show = false
   series[0].lineStyle!.curveness = 0
@@ -220,6 +231,7 @@ onBeforeRouteUpdate(async (to, from) => {
 })
 
 let undirectedEdgesStorage: GraphEdge[] = []
+// 是否显示有向边
 const isShowDirectedEdge = ref(false)
 const showDirectedEdgeChange: (flag: string | number | boolean) => any = flag => {
   const series = option.series as echarts.GraphSeriesOption[]
@@ -233,13 +245,7 @@ const showDirectedEdgeChange: (flag: string | number | boolean) => any = flag =>
   ;(series[0].edgeSymbol as string[])[1] = flag ? 'arrow' : 'none'
   renderGraph()
 }
-
-const isShowEdgeLabel = ref(false)
-const showEdgeLabelChange: (flag: string | number | boolean) => any = flag => {
-  const series = option.series as echarts.GraphSeriesOption[]
-  series[0].edgeLabel!.show = flag as boolean
-  renderGraph()
-}
+// 有向边转换为无向边
 const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
   let undirectedEdgesObj: { [key: string]: GraphEdge } = {}
   for (let i = 0; i < directedEdges.length; i++) {
@@ -264,6 +270,39 @@ const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
 
   return Object.values(undirectedEdgesObj)
 }
+
+// 是否显示跳转次数
+const isShowEdgeLabel = ref(false)
+const showEdgeLabelChange: (flag: string | number | boolean) => any = flag => {
+  const series = option.series as echarts.GraphSeriesOption[]
+  series[0].edgeLabel!.show = flag as boolean
+  renderGraph()
+}
+
+let keyword: Ref<string> = ref('') // 关键字
+// 高亮关键字
+const highlightNode = () => {
+  // 清空高亮
+  myChart.dispatchAction({
+    type: 'downplay',
+    seriesIndex: 0
+  })
+  keyword.value = keyword.value.trim()
+  if (keyword.value === '') return
+  let keywordArray = keyword.value.split(',').map(keyword => keyword.trim())
+  keywordArray.forEach(keyword => {
+    let matchingNodes = nodes.filter(node => node.name.includes(keyword))
+    if (matchingNodes.length > 0) {
+      matchingNodes.forEach(node => {
+        myChart.dispatchAction({
+          type: 'highlight',
+          seriesIndex: 0,
+          dataIndex: nodes.findIndex(n => n === node)
+        })
+      })
+    }
+  })
+}
 </script>
 <template>
   <div class="graph">
@@ -277,13 +316,32 @@ const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
       <el-switch class="switch" v-model="isShowEdgeLabel" active-text="显示跳转次数" @change="showEdgeLabelChange" />
     </div>
     <div class="btn-box">
-      <el-button @click="goBack" class="back" v-blur-fix>返回</el-button>
-      <el-button type="primary" @click="onClickExportImg" v-blur-fix>保存图片</el-button>
+      <div class="top-btn">
+        <el-button @click="goBack" class="back" v-blur-fix>返回</el-button>
+        <el-button type="primary" @click="onClickExportImg" v-blur-fix>保存图片</el-button>
+      </div>
+      <!-- 搜索框 -->
+      <div class="search">
+        <el-input
+          @keyup.enter="highlightNode"
+          class="search-input"
+          clearable
+          placeholder="搜索关键字"
+          v-model="keyword"
+        >
+          <template #prefix>
+            <i-ep-search></i-ep-search>
+          </template>
+        </el-input>
+        <el-button class="search-btn" type="primary" @click="highlightNode" v-blur-fix>
+          <i-ep-search style="padding-left: 4px"></i-ep-search>
+        </el-button>
+      </div>
     </div>
     <div id="container"></div>
   </div>
 </template>
-<style lang="scss" scoped>
+<style lang="scss">
 .graph {
   width: 100%;
   height: 100vh;
@@ -310,7 +368,27 @@ const convertToUndirectedEdges = (directedEdges: GraphEdge[]) => {
   }
 
   .btn-box {
-    right: 5%;
+    display: flex;
+    flex-direction: column;
+    right: 2%;
+    .top-btn {
+      display: flex;
+      justify-content: end;
+    }
+    .search {
+      margin-top: 12px;
+      text-wrap: nowrap;
+      .search-input {
+        width: 130px;
+        .el-input__wrapper {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+      }
+      .search-btn {
+        margin-left: -5px;
+      }
+    }
   }
 }
 </style>
