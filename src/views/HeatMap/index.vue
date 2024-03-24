@@ -195,6 +195,10 @@ const showDetail = async (params: any) => {
   }
 }
 
+const goHome = () => {
+  router.push(`/${lang.value}/${xDate.value}`)
+}
+
 onMounted(async () => {
   myChart = echarts.init(document.getElementById('container'))
   myChart.on('click', (params: echarts.ECElementEvent) => {
@@ -215,7 +219,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
 </script>
 <template>
   <div class="heat-map">
-    <div class="date-box">
+    <div class="top-box">
       <div class="date x-date">
         <span class="demonstration">x轴日期：</span>
         <el-date-picker
@@ -224,6 +228,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
           format="YYYY-MM"
           value-format="YYYY-MM"
           placeholder="选择x轴日期"
+          :clearable="false"
           :disabled-date="disabledDateFn"
           @change="dateChange"
         ></el-date-picker>
@@ -236,10 +241,12 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
           format="YYYY-MM"
           value-format="YYYY-MM"
           placeholder="选择y轴日期"
+          :clearable="false"
           :disabled-date="disabledDateFn"
           @change="dateChange"
         />
       </div>
+      <el-button class="home-btn" @click="goHome">返回首页</el-button>
     </div>
     <el-dialog v-model="dialogTableVisible" title="详情" width="800">
       <div class="detail-item">
@@ -265,7 +272,7 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
   display: flex;
   flex-direction: column;
 
-  .date-box {
+  .top-box {
     position: relative;
     z-index: 1;
     display: flex;
@@ -273,6 +280,11 @@ onBeforeRouteUpdate(async (to: RouteLocationNormalized, from: RouteLocationNorma
     margin-top: 30px;
     .date {
       margin-right: 30px;
+    }
+    .home-btn {
+      position: absolute;
+      top: 0;
+      right: 2.5%;
     }
   }
 

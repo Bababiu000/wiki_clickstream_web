@@ -25,6 +25,8 @@ interface ClsNode {
   name: string
   density: number
   dcDictIdx: number
+  x?: number
+  y?: number
   date: Date
   label: number
   lang: string
@@ -34,6 +36,9 @@ interface GraphNode {
   name: string
   label: number
   symbolSize: number
+  x?: number
+  y?: number
+  value?: number[]
 }
 interface GraphEdge {
   source: string
@@ -92,25 +97,37 @@ const getClusterEdges = async (lang: string, dateStr: string, label: number): Pr
 }
 
 let option: echarts.EChartsOption = {
+  xAxis: {
+    type: 'value'
+  },
+  yAxis: {
+    type: 'value'
+  },
+  grid: {
+    left: 50,
+    right: 50,
+    top: 50,
+    bottom: 50
+  },
   series: [
     {
       type: 'graph', // 图的类型为关系图
-      layout: 'force', // 使用力导向布局
+      layout: 'force',
       force: {
         repulsion: 100, // 节点间的斥力
         gravity: 0.1 // 中心点的引力
       },
+      coordinateSystem: 'cartesian2d',
       label: {
         show: true,
         position: 'top', // 调整节点名称的位置
-        color: 'black', // 设置节点名称的颜色
-        // 高亮样式
-        emphasis: {
-          textStyle: {
-            color: '#000' // 高亮节点文字颜色
-          },
-          // 高亮节点背景样式
-          backgroundColor: 'yellow',
+        color: 'black' // 设置节点名称的颜色
+      },
+      // 高亮样式
+      emphasis: {
+        label: {
+          color: '#000', // 高亮节点文字颜色
+          backgroundColor: 'yellow', // 高亮节点背景样式
           padding: 5, // 背景内边距
           borderRadius: 5 // 背景圆角
         }
@@ -138,25 +155,25 @@ let option: echarts.EChartsOption = {
         position: 'middle',
         formatter: '{c}'
       },
-      roam: true, // 启用拖动
+      roam: true, // 启用鼠标缩放和拖动
       lineStyle: {
         curveness: 0,
         opacity: 0.6
       }
     }
   ],
-  // 其他图表配置项
+  // 缩放工具
   dataZoom: [
     {
-      type: 'inside', // 内置的缩放工具
+      type: 'slider',
       start: 0,
       end: 100
     },
     {
+      type: 'slider',
+      orient: 'vertical',
       start: 0,
-      end: 100,
-      showDetail: false // 不显示详细信息
-      // 更多配置项
+      end: 100
     }
   ]
 }
@@ -169,6 +186,7 @@ const initOption = () => {
     return {
       id: i.dictIdx + '',
       name: i.name,
+      value: [i.x as number, i.y as number],
       symbolSize: (i.density / maxDensity) * 100,
       label: i.label
     }
@@ -184,6 +202,7 @@ const initOption = () => {
 
   directedEdgesStorage = links
   convertToUndirectedEdges(links)
+
   const series = option.series as echarts.GraphSeriesOption[]
   series[0].data = nodes
   series[0].links = links
@@ -279,6 +298,37 @@ const showEdgeLabelChange: (flag: string | number | boolean) => any = flag => {
   renderGraph()
 }
 
+// 是否启用力引导布局
+let isUseForce = ref(false)
+const useForceChange: (flag: string | number | boolean) => any = flag => {
+  const series = option.series as echarts.GraphSeriesOption[]
+  if (flag) {
+    series[0].layout = 'force'
+    series[0].coordinateSystem = undefined
+    option.dataZoom = []
+  } else {
+    series[0].layout = 'none'
+    series[0].coordinateSystem = 'cartesian2d'
+    option.dataZoom = [
+      {
+        type: 'slider',
+        start: 0,
+        end: 100
+      },
+      {
+        type: 'slider',
+        orient: 'vertical',
+        start: 0,
+        end: 100
+      }
+    ]
+  }
+  option.xAxis!.show = !flag
+  option.yAxis!.show = !flag
+  myChart.clear() // 清除当前图表的状态
+  renderGraph()
+}
+
 let keyword: Ref<string> = ref('') // 关键字
 // 高亮关键字
 const highlightNode = () => {
@@ -314,6 +364,7 @@ const highlightNode = () => {
         @change="showDirectedEdgeChange"
       />
       <el-switch class="switch" v-model="isShowEdgeLabel" active-text="显示跳转次数" @change="showEdgeLabelChange" />
+      <el-switch class="switch" v-model="isUseForce" active-text="启用力引导布局" @change="useForceChange" />
     </div>
     <div class="btn-box">
       <div class="top-btn">
@@ -358,13 +409,20 @@ const highlightNode = () => {
   .btn-box {
     position: fixed;
     z-index: 999;
-    top: 50px;
+    top: 19px;
   }
 
   .switch-box {
     left: 3%;
     display: flex;
     flex-direction: column;
+    .switch {
+      .el-switch__label {
+        span {
+          color: rgba(0, 0, 0, 0.6);
+        }
+      }
+    }
   }
 
   .btn-box {
