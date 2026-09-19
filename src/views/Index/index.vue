@@ -13,8 +13,11 @@ const { latestDate } = storeToRefs(dateStore)
 
 onMounted(async () => {
   if (route.fullPath === '/') {
-    await dateStore.getDateRange('zh')
-    router.push({ path: `/zh/${latestDate.value}` })
+    await dateStore.ensureDateRange('zh')
+
+    await router.push({
+      path: `/zh/${latestDate.value}`
+    })
   }
 })
 </script>

@@ -6,16 +6,23 @@ import { TabPaneName } from 'element-plus/es/components/tabs/src/tabs'
 
 const route: RouteLocationNormalizedLoaded = useRoute()
 const router: Router = useRouter()
-
 const dateStore = useDateStore()
+
 const { years, months, latestDate } = storeToRefs(dateStore)
 
 const lang: Ref<string> = ref(route.params.lang as string)
 const currDate: ComputedRef<string> = computed(() => route.params.date as string)
 
-const langChange = async (lang: TabPaneName): Promise<void> => {
-  await dateStore.getDateRange(lang as string)
-  router.push({ path: `/${lang}/${latestDate.value}` })
+onMounted(async () => {
+  await dateStore.ensureDateRange(lang.value)
+})
+
+const langChange = async (newLang: TabPaneName): Promise<void> => {
+  await dateStore.ensureDateRange(newLang as string)
+
+  await router.push({
+    path: `/${newLang}/${latestDate.value}`
+  })
 }
 
 const padZero = (num: number): string => {
